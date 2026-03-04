@@ -2,7 +2,7 @@
   "name": "Eye Focus Trainer",
   "short_name": "EyeTrainer",
   "description": "Щоденні вправи для зменшення втоми очей",
-  "start_url": "./eye-trainer-pwa.html",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0c10",
