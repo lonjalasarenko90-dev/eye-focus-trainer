@@ -17,13 +17,13 @@
     {
       "name": "Фокус Близько-Далеко",
       "short_name": "Фокус",
-      "url": "./eye-trainer-pwa.html#focus",
+      "url": "./#focus",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Таймер 20-20-20",
       "short_name": "20-20-20",
-      "url": "./eye-trainer-pwa.html#break",
+      "url": "./#break",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
