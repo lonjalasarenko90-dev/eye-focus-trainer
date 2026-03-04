@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👁 Eye Focus Trainer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --border: #1e2230;
+    --accent: #4af0c4;
+    --accent2: #7c6af0;
+    --warn: #f0a54a;
+    --text: #e8eaf0;
+    --muted: #5a6070;
+    --card: #13161f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 20% 10%, rgba(74,240,196,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 500px 300px at 80% 80%, rgba(124,106,240,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 32px 0 28px;
+  }
+
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+
+  header h1 span {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  header p {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Tab nav */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 6px;
+  }
+
+  .tab {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 10px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  .tab-icon { display: block; font-size: 18px; margin-bottom: 3px; }
+
+  /* Sections */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  /* Exercise: Focus Near-Far */
+  #focus-arena {
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    background: radial-gradient(ellipse at center, #0f1520 0%, #080a0e 100%);
+    margin-bottom: 16px;
+    cursor: pointer;
+  }
+
+  .focus-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 20px var(--accent), 0 0 60px rgba(74,240,196,0.3);
+    transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 1.5s ease,
+                width 1.5s ease,
+                height 1.5s ease;
+    position: absolute;
+  }
+
+  .focus-dot.far {
+    width: 8px;
+    height: 8px;
+    opacity: 0.4;
+    box-shadow: 0 0 6px var(--accent);
+  }
+
+  .focus-ring {
+    position: absolute;
+    border: 1px solid rgba(74,240,196,0.15);
+    border-radius: 50%;
+    animation: pulse-ring 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.5); opacity: 0; }
+  }
+
+  .focus-instruction {
+    position: absolute;
+    bottom: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .phase-label {
+    font-size: 28px;
+    font-family: 'DM Serif Display', serif;
+    text-align: center;
+    min-height: 40px;
+    margin-bottom: 8px;
+  }
+
+  .phase-sub {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  /* Timer ring */
+  .timer-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .timer-svg { transform: rotate(-90deg); }
+
+  .timer-bg { fill: none; stroke: var(--border); stroke-width: 3; }
+  .timer-fill {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s linear;
+  }
+
+  .timer-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    fill: var(--text);
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+
+  /* Buttons */
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0c10;
+  }
+
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  .btn-secondary:hover { background: #252a38; }
+
+  .btn-sm {
+    width: auto;
+    padding: 8px 16px;
+    font-size: 11px;
+  }
+
+  /* 20-20-20 Timer */
+  .timer-display {
+    text-align: center;
+    padding: 16px 0;
+  }
+
+  .big-time {
+    font-family: 'DM Serif Display', serif;
+    font-size: 64px;
+    line-height: 1;
+    color: var(--accent);
+    letter-spacing: -2px;
+  }
+
+  .time-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+  }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 1s linear;
+  }
+
+  /* Blink exercise */
+  .blink-target {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .blink-eye {
+    font-size: 64px;
+    transition: transform 0.1s;
+    cursor: default;
+    user-select: none;
+  }
+
+  .blink-eye.closed { transform: scaleY(0.1); }
+
+  .blink-count {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  /* Peripheral */
+  #peripheral-arena {
+    height: 200px;
+    position: relative;
+    border-radius: 12px;
+    background: #080a0e;
+    margin-bottom: 16px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .center-cross {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px; height: 20px;
+    pointer-events: none;
+  }
+
+  .center-cross::before,
+  .center-cross::after {
+    content: '';
+    position: absolute;
+    background: var(--muted);
+    border-radius: 1px;
+  }
+
+  .center-cross::before { width: 2px; height: 100%; left: 50%; top: 0; transform: translateX(-50%); }
+  .center-cross::after  { width: 100%; height: 2px; top: 50%; left: 0; transform: translateY(-50%); }
+
+  .peripheral-dot {
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: opacity 0.3s;
+  }
+
+  .peripheral-dot.hit { animation: hit-flash 0.3s forwards; }
+
+  @keyframes hit-flash {
+    0% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
+  }
+
+  .peripheral-score {
+    position: absolute;
+    top: 10px; right: 12px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  /* Acuity test */
+  .acuity-letter {
+    font-family: 'DM Serif Display', serif;
+    text-align: center;
+    color: var(--text);
+    transition: font-size 0.5s;
+    line-height: 1;
+    padding: 20px 0;
+  }
+
+  .acuity-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .acuity-btn {
+    flex: 1;
+    min-width: 44px;
+    padding: 10px;
+    background: var(--border);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .acuity-btn:hover { border-color: var(--accent); }
+  .acuity-btn.correct { background: rgba(74,240,196,0.15); border-color: var(--accent); }
+  .acuity-btn.wrong { background: rgba(240,74,74,0.1); border-color: #f04a4a; }
+
+  .level-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .level-badge.easy { background: rgba(74,240,196,0.1); color: var(--accent); }
+  .level-badge.medium { background: rgba(240,165,74,0.1); color: var(--warn); }
+  .level-badge.hard { background: rgba(124,106,240,0.1); color: var(--accent2); }
+
+  /* History */
+  .history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .history-item:last-child { border-bottom: none; }
+  .history-date { color: var(--muted); }
+  .history-score { color: var(--accent); font-weight: 500; }
+
+  /* Notification toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--accent);
+    color: #0a0c10;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  .row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .row .btn { flex: 1; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    background: rgba(74,240,196,0.1);
+    color: var(--accent);
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="container">
+
+  <header>
+    <div class="logo">👁 Eye Focus Trainer</div>
+    <h1>Тренування <span>Зору</span></h1>
+    <p>Вправи для зменшення втоми очей · 5 хв на день</p>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-value" id="stat-sessions">0</div>
+      <div class="stat-label">Сесій</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="stat-streak">0</div>
+      <div class="stat-label">Днів поспіль</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="stat-score">—</div>
+      <div class="stat-label">Гострота</div>
+    </div>
+  </div>
+
+
+  <div class="card" id="settings-card">
+    <div class="card-title">Налаштування</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="opt-sound" /> Звук
+      </label>
+      <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="opt-vibrate" /> Вібрація
+      </label>
+      <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="opt-save" checked /> Зберігати статистику
+      </label>
+      <button class="btn btn-secondary btn-sm" onclick="resetStatsConfirm()">Скинути статистику</button>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.7">
+      <b style="color:var(--text)">Нагадування:</b> браузерні повідомлення працюють лише якщо сторінка відкрита.
+      Для справжніх Android-нагадувань потрібен APK (WebView + AlarmManager).
+    </p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-primary" onclick="requestNotify()">🔔 Дозволити повідомлення</button>
+      <button class="btn btn-secondary" onclick="testNotify()">Тест</button>
+    </div>
+  </div>
+
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('focus')">
+      <span class="tab-icon">🎯</span>Фокус
+    </button>
+    <button class="tab" onclick="switchTab('break')">
+      <span class="tab-icon">⏱</span>20-20-20
+    </button>
+    <button class="tab" onclick="switchTab('blink')">
+      <span class="tab-icon">👁</span>Моргання
+    </button>
+    <button class="tab" onclick="switchTab('acuity')">
+      <span class="tab-icon">🔠</span>Тест
+    </button>
+  </div>
+
+  <!-- FOCUS SECTION -->
+  <div id="section-focus" class="section active">
+    <div class="card">
+      <div class="card-title">Близько — Далеко</div>
+      <div id="focus-arena">
+        <div class="focus-ring" style="width:80px;height:80px;"></div>
+        <div class="focus-ring" style="width:140px;height:140px;animation-delay:1s"></div>
+        <div class="focus-dot" id="focus-dot"></div>
+        <div class="focus-instruction">Стежте за точкою очима</div>
+      </div>
+      <div class="phase-label" id="phase-label">Натисніть Старт</div>
+      <div class="phase-sub" id="phase-sub">Фокусуйтесь на точці · 10 сек кожна фаза</div>
+      <div class="row">
+        <button class="btn btn-primary" id="focus-start-btn" onclick="startFocus()">▶ Старт</button>
+        <button class="btn btn-secondary" id="focus-stop-btn" onclick="stopFocus()" style="display:none">■ Стоп</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Що це дає</div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.7">
+        Тренує м'яз ока (циліарний) змінювати фокус. Зменшує напруження після екранів.
+        Особливо корисно при далекозорості та вікових змінах після 40 років.
+      </p>
+    </div>
+  </div>
+
+  <!-- 20-20-20 SECTION -->
+  <div id="section-break" class="section">
+    <div class="card">
+      <div class="card-title">Правило 20-20-20</div>
+      <div class="timer-display">
+        <div class="big-time" id="break-time">20:00</div>
+        <div class="time-label" id="break-label">До наступної перерви</div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="break-progress" style="width:100%"></div>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary" id="break-btn" onclick="toggleBreakTimer()">▶ Запустити</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Як це працює</div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.7">
+        Кожні <b style="color:var(--text)">20 хвилин</b> роботи → дивіться <b style="color:var(--text)">20 секунд</b> 
+        на відстань <b style="color:var(--text)">6 метрів</b> (у вікно). 
+        Знімає спазм акомодації — головну причину втоми очей.
+      </p>
+    </div>
+  </div>
+
+  <!-- BLINK SECTION -->
+  <div id="section-blink" class="section">
+    <div class="card">
+      <div class="card-title">Вправа на Моргання</div>
+      <div class="blink-target">
+        <div class="blink-eye" id="blink-eye">👁</div>
+        <div class="blink-count" id="blink-count">0 / 20 морганнь</div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="blink-progress" style="width:0%"></div>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary" id="blink-btn" onclick="startBlink()">▶ Почати</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Навіщо моргати</div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.7">
+        За екраном ми моргаємо у 3× рідше. Це висушує рогівку → зір розмивається.
+        20 повних морганнь кожну годину зберігають сльозову плівку і чіткість.
+      </p>
+    </div>
+  </div>
+
+  <!-- ACUITY TEST -->
+  <div id="section-acuity" class="section">
+    <div class="card">
+      <div class="card-title">Тест Гостроти Зору <span class="badge">В окулярах</span></div>
+      <div id="acuity-area">
+        <div id="level-badge" class="level-badge easy">Рівень 1 — Легкий</div>
+        <div class="acuity-letter" id="acuity-letter" style="font-size:72px">E</div>
+        <p style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px">
+          Яка буква? Тримайте телефон на відстані витягнутої руки (~50 см)
+        </p>
+        <div id="acuity-choices" class="acuity-row"></div>
+        <div class="divider"></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+          <span>Правильних: <span id="acuity-correct" style="color:var(--accent)">0</span></span>
+          <span>Питань: <span id="acuity-total" style="color:var(--text)">0</span> / 10</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="acuity-result-card" style="display:none">
+      <div class="card-title">Результат</div>
+      <div style="text-align:center;padding:16px 0">
+        <div style="font-family:'DM Serif Display',serif;font-size:48px;color:var(--accent)" id="result-pct"></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px" id="result-msg"></div>
+      </div>
+      <button class="btn btn-primary" onclick="resetAcuity()">Пройти ще раз</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ─── Tab switching ────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const names = ['focus','break','blink','acuity'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+}
+
+// ─── Toast ────────────────────────────────────────────────
+function showToast(msg) {
+  beep();
+  buzz(40);
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+
+// ─── Settings + Stats (localStorage) ─────────────────────
+const LS_KEY = 'eye_focus_trainer_v1';
+
+let options = { sound: false, vibrate: false, save: true };
+let stats = { sessions: 0, streak: 0, lastDate: null, score: null };
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const st = JSON.parse(raw);
+    if (st && typeof st === 'object') {
+      if (st.options) options = { ...options, ...st.options };
+      if (st.stats) stats = { ...stats, ...st.stats };
+    }
+  } catch (e) {}
+}
+
+function persistState() {
+  if (!options.save) return;
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({ options, stats }));
+  } catch (e) {}
+}
+
+function applyOptionsUI() {
+  const s = document.getElementById('opt-sound');
+  const v = document.getElementById('opt-vibrate');
+  const sv = document.getElementById('opt-save');
+  if (s) s.checked = !!options.sound;
+  if (v) v.checked = !!options.vibrate;
+  if (sv) sv.checked = !!options.save;
+
+  if (s) s.onchange = () => { options.sound = s.checked; persistState(); };
+  if (v) v.onchange = () => { options.vibrate = v.checked; persistState(); };
+  if (sv) sv.onchange = () => {
+    options.save = sv.checked;
+    if (!options.save) localStorage.removeItem(LS_KEY);
+    else persistState();
+  };
+}
+
+function beep() {
+  if (!options.sound) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 880;
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.value = 0.04;
+    o.start();
+    setTimeout(() => { o.stop(); ctx.close(); }, 120);
+  } catch (e) {}
+}
+
+function buzz(ms=60) {
+  if (!options.vibrate) return;
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+function saveStats() {
+  document.getElementById('stat-sessions').textContent = stats.sessions;
+  document.getElementById('stat-streak').textContent = stats.streak;
+  document.getElementById('stat-score').textContent = stats.score || '—';
+  persistState();
+}
+
+function resetStatsConfirm() {
+  if (!confirm('Скинути статистику?')) return;
+  stats = { sessions: 0, streak: 0, lastDate: null, score: null };
+  saveStats();
+  showToast('Статистику скинуто');
+}
+
+function incrementSession() {
+  stats.sessions++;
+  const today = new Date().toDateString();
+  if (stats.lastDate !== today) {
+    if (stats.lastDate === new Date(Date.now() - 86400000).toDateString()) {
+      stats.streak++;
+    } else if (!stats.lastDate) {
+      stats.streak = 1;
+    } else {
+      stats.streak = 1;
+    }
+    stats.lastDate = today;
+  }
+  saveStats();
+}
+
+// ─── Notifications (work only while page is open) ─────────
+async function requestNotify() {
+  if (!('Notification' in window)) {
+    alert('Цей браузер не підтримує повідомлення.');
+    return;
+  }
+  const res = await Notification.requestPermission();
+  showToast(res === 'granted' ? '🔔 Дозвіл надано' : '🔕 Дозвіл не надано');
+}
+
+function testNotify() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') {
+    showToast('Спочатку натисніть "Дозволити повідомлення"');
+    return;
+  }
+  new Notification('Eye Focus Trainer', { body: 'Тестове повідомлення 👁' });
+}
+
+// ─── FOCUS exercise ───────────────────────────────────────
+let focusInterval = null;
+let focusPhase = 'near'; // near or far
+let focusCount = 0;
+
+function startFocus() {
+  document.getElementById('focus-start-btn').style.display = 'none';
+  document.getElementById('focus-stop-btn').style.display = '';
+  focusPhase = 'near';
+  focusCount = 0;
+  setFocusPhase('near');
+  focusInterval = setInterval(() => {
+    focusCount++;
+    if (focusCount >= 10) {
+      clearInterval(focusInterval);
+      focusInterval = null;
+      document.getElementById('focus-start-btn').style.display = '';
+      document.getElementById('focus-stop-btn').style.display = 'none';
+      document.getElementById('phase-label').textContent = '✓ Готово!';
+      document.getElementById('phase-sub').textContent = 'Відмінно! Вправу виконано';
+      document.getElementById('focus-dot').className = 'focus-dot';
+      incrementSession();
+      showToast('👏 Вправу виконано!');
+      return;
+    }
+    focusPhase = focusPhase === 'near' ? 'far' : 'near';
+    setFocusPhase(focusPhase);
+  }, 4000);
+}
+
+function setFocusPhase(phase) {
+  const dot = document.getElementById('focus-dot');
+  const label = document.getElementById('phase-label');
+  const sub = document.getElementById('phase-sub');
+  if (phase === 'near') {
+    dot.className = 'focus-dot';
+    label.textContent = '● Близько';
+    sub.textContent = 'Фокусуйтесь на великій точці';
+  } else {
+    dot.className = 'focus-dot far';
+    label.textContent = '· Далеко';
+    sub.textContent = 'Фокусуйтесь на маленькій точці';
+  }
+}
+
+function stopFocus() {
+  if (focusInterval) clearInterval(focusInterval);
+  focusInterval = null;
+  document.getElementById('focus-start-btn').style.display = '';
+  document.getElementById('focus-stop-btn').style.display = 'none';
+  document.getElementById('phase-label').textContent = 'Натисніть Старт';
+  document.getElementById('phase-sub').textContent = 'Фокусуйтесь на точці · 4 сек кожна фаза';
+  document.getElementById('focus-dot').className = 'focus-dot';
+}
+
+// ─── 20-20-20 Timer ───────────────────────────────────────
+let breakActive = false;
+let breakSecs = 20 * 60;
+let breakTotal = 20 * 60;
+let breakTimer = null;
+let breakResting = false;
+
+function toggleBreakTimer() {
+  if (!breakActive) {
+    breakActive = true;
+    breakSecs = 20 * 60;
+    breakTotal = 20 * 60;
+    breakResting = false;
+    document.getElementById('break-btn').textContent = '■ Зупинити';
+    breakTimer = setInterval(tickBreak, 1000);
+  } else {
+    clearInterval(breakTimer);
+    breakActive = false;
+    breakSecs = 20 * 60;
+    breakTotal = 20 * 60;
+    document.getElementById('break-btn').textContent = '▶ Запустити';
+    document.getElementById('break-time').textContent = '20:00';
+    document.getElementById('break-label').textContent = 'До наступної перерви';
+    document.getElementById('break-progress').style.width = '100%';
+  }
+}
+
+function tickBreak() {
+  breakSecs--;
+  if (breakSecs <= 0) {
+    if (!breakResting) {
+      // Start 20-sec rest
+      breakResting = true;
+      breakSecs = 20;
+      breakTotal = 20;
+      document.getElementById('break-label').textContent = '👁 Дивіться вдаль — 6 метрів!';
+      showToast('👁 Перерва! Дивіться у вікно 20 сек');
+    } else {
+      // Rest done, restart work
+      breakResting = false;
+      breakSecs = 20 * 60;
+      breakTotal = 20 * 60;
+      document.getElementById('break-label').textContent = 'До наступної перерви';
+      incrementSession();
+      showToast('✓ Чудово! Продовжуйте роботу');
+    }
+  }
+
+  const mins = Math.floor(breakSecs / 60);
+  const secs = breakSecs % 60;
+  document.getElementById('break-time').textContent =
+    (breakResting ? '' : '') + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+
+  const pct = (breakSecs / breakTotal) * 100;
+  document.getElementById('break-progress').style.width = pct + '%';
+  document.getElementById('break-progress').style.background =
+    breakResting ? 'var(--warn)' : 'var(--accent)';
+}
+
+// ─── Blink exercise ───────────────────────────────────────
+let blinkActive = false;
+let blinkCount = 0;
+let blinkTimer = null;
+const BLINK_TARGET = 20;
+
+function startBlink() {
+  if (blinkActive) return;
+  blinkActive = true;
+  blinkCount = 0;
+  document.getElementById('blink-btn').textContent = 'Моргайте разом...';
+  document.getElementById('blink-btn').disabled = true;
+  runBlink();
+}
+
+function runBlink() {
+  if (blinkCount >= BLINK_TARGET) {
+    document.getElementById('blink-eye').textContent = '😌';
+    document.getElementById('blink-count').textContent = '✓ Вправу виконано!';
+    document.getElementById('blink-btn').textContent = '▶ Ще раз';
+    document.getElementById('blink-btn').disabled = false;
+    blinkActive = false;
+    incrementSession();
+    showToast('💧 Очі зволожені!');
+    setTimeout(() => {
+      document.getElementById('blink-eye').textContent = '👁';
+      document.getElementById('blink-count').textContent = '0 / 20 морганнь';
+      document.getElementById('blink-progress').style.width = '0%';
+    }, 3000);
+    return;
+  }
+
+  const eye = document.getElementById('blink-eye');
+  // Close
+  eye.classList.add('closed');
+  eye.textContent = '😑';
+  setTimeout(() => {
+    // Open
+    eye.classList.remove('closed');
+    eye.textContent = '👁';
+    blinkCount++;
+    document.getElementById('blink-count').textContent = blinkCount + ' / ' + BLINK_TARGET + ' морганнь';
+    document.getElementById('blink-progress').style.width = (blinkCount / BLINK_TARGET * 100) + '%';
+    setTimeout(runBlink, 800);
+  }, 300);
+}
+
+// ─── Acuity test ──────────────────────────────────────────
+const LETTERS = 'EFPTOZCDHKDNRSVK'.split('');
+const LEVELS = [
+  { size: 72, label: 'Рівень 1 — Легкий', cls: 'easy' },
+  { size: 48, label: 'Рівень 2 — Середній', cls: 'medium' },
+  { size: 32, label: 'Рівень 3 — Важкий', cls: 'hard' },
+  { size: 22, label: 'Рівень 4 — Дуже важкий', cls: 'hard' },
+];
+
+let acuityCorrect = 0;
+let acuityTotal = 0;
+let acuityTarget = '';
+let acuityLevelIdx = 0;
+
+function randomLetter() {
+  return LETTERS[Math.floor(Math.random() * LETTERS.length)];
+}
+
+function showAcuityQuestion() {
+  if (acuityTotal >= 10) {
+    showAcuityResult();
+    return;
+  }
+
+  // Progress level every 3 correct
+  acuityLevelIdx = Math.min(Math.floor(acuityCorrect / 3), LEVELS.length - 1);
+  const level = LEVELS[acuityLevelIdx];
+
+  const badge = document.getElementById('level-badge');
+  badge.textContent = level.label;
+  badge.className = 'level-badge ' + level.cls;
+
+  acuityTarget = randomLetter();
+  document.getElementById('acuity-letter').style.fontSize = level.size + 'px';
+  document.getElementById('acuity-letter').textContent = acuityTarget;
+  document.getElementById('acuity-total').textContent = acuityTotal;
+  document.getElementById('acuity-correct').textContent = acuityCorrect;
+
+  // Generate choices: correct + 3 wrong
+  const choices = [acuityTarget];
+  while (choices.length < 4) {
+    const l = randomLetter();
+    if (!choices.includes(l)) choices.push(l);
+  }
+  choices.sort(() => Math.random() - 0.5);
+
+  const container = document.getElementById('acuity-choices');
+  container.innerHTML = '';
+  choices.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'acuity-btn';
+    btn.textContent = ch;
+    btn.onclick = () => handleAcuityAnswer(ch, btn);
+    container.appendChild(btn);
+  });
+}
+
+function handleAcuityAnswer(letter, btn) {
+  document.querySelectorAll('.acuity-btn').forEach(b => b.onclick = null);
+  acuityTotal++;
+  if (letter === acuityTarget) {
+    btn.classList.add('correct');
+    acuityCorrect++;
+    showToast('✓ Правильно!');
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.acuity-btn').forEach(b => {
+      if (b.textContent === acuityTarget) b.classList.add('correct');
+    });
+  }
+  setTimeout(showAcuityQuestion, 1000);
+}
+
+function showAcuityResult() {
+  document.getElementById('acuity-area').style.display = 'none';
+  document.getElementById('acuity-result-card').style.display = '';
+  const pct = Math.round(acuityCorrect / acuityTotal * 100);
+  document.getElementById('result-pct').textContent = pct + '%';
+  let msg = '';
+  if (pct >= 90) msg = 'Відмінний результат! Гострота зору дуже добра в окулярах.';
+  else if (pct >= 70) msg = 'Хороший результат. Перевірте, чи правильно підібрані окуляри.';
+  else msg = 'Рекомендуємо перевірити зір у офтальмолога.';
+  document.getElementById('result-msg').textContent = msg;
+
+  // Save score
+  stats.score = pct + '%';
+  incrementSession();
+  saveStats();
+}
+
+function resetAcuity() {
+  acuityCorrect = 0;
+  acuityTotal = 0;
+  acuityLevelIdx = 0;
+  document.getElementById('acuity-area').style.display = '';
+  document.getElementById('acuity-result-card').style.display = 'none';
+  showAcuityQuestion();
+}
+
+// ─── Init ─────────────────────────────────────────────────
+loadState();
+applyOptionsUI();
+saveStats();
+showAcuityQuestion();
+
+
+// ─── PWA (offline) ───────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+</script>
+</body>
+</html>

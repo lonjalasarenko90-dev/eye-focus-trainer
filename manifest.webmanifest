@@ -1,0 +1,30 @@
+{
+  "name": "Eye Focus Trainer",
+  "short_name": "EyeTrainer",
+  "description": "Щоденні вправи для зменшення втоми очей",
+  "start_url": "./eye-trainer-pwa.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0c10",
+  "theme_color": "#0a0c10",
+  "lang": "uk",
+  "categories": ["health", "lifestyle"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Фокус Близько-Далеко",
+      "short_name": "Фокус",
+      "url": "./eye-trainer-pwa.html#focus",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Таймер 20-20-20",
+      "short_name": "20-20-20",
+      "url": "./eye-trainer-pwa.html#break",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
